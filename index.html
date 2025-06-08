@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Docker Guide for Python Developers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: "Tech Neutrals" - A calm and focused theme using off-white, grays, and a primary blue for interaction. -->
+    <!-- Application Structure Plan: The SPA is structured into five logical, scrollable sections: Introduction, Core Concepts, Commands, Dockerizing Apps, and Best Practices. This thematic structure, navigated by a sticky header, allows users to either follow a linear learning path or jump directly to topics of interest. The design prioritizes interactivity: concepts are visualized, commands are explorable via tabs and click-to-reveal details, and Dockerfiles are deconstructed with hover-to-learn tooltips. This task-oriented, non-linear approach was chosen to make a dense technical document more digestible and engaging than a simple linear report, catering to both beginners and those looking for specific information. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Core concepts (Image, Container, Volume, Network). Goal: Show relationships. Viz: HTML/CSS diagram with interactive panels. Interaction: Click on a component to display its detailed information. Justification: Visualizing the relationships between Docker's core components makes them easier to understand than text alone. Library: Vanilla JS for DOM manipulation.
+        - Report Info: Docker commands. Goal: Organize and explain. Viz: Tabbed interface separating Container and Image commands. Interaction: Click on command buttons to reveal descriptions, options, and examples. Justification: Breaks down a large set of commands into manageable, explorable pieces. Library: Vanilla JS.
+        - Report Info: Dockerfile examples for Django/FastAPI. Goal: Deconstruct and explain. Viz: Code blocks with custom tooltips. Interaction: Hover over keywords or lines in the Dockerfile to see an explanation. Justification: This provides contextual learning directly within the code, which is more effective than cross-referencing with separate text. Library: Vanilla JS.
+        - Report Info: Best Practices. Goal: Inform and provide detail on demand. Viz: Grid of clickable cards. Interaction: Click to expand/collapse cards for more detailed information. Justification: Presents key practices concisely, allowing users to dive deeper into topics that interest them. Library: Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .tooltip {
+            position: absolute;
+            display: none;
+            background-color: #1f2937;
+            color: #f3f4f6;
+            padding: 10px;
+            border-radius: 6px;
+            z-index: 10;
+            width: 250px;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .dockerfile-line:hover {
+            background-color: #374151;
+            cursor: pointer;
+        }
+        .dockerfile-line .tooltip {
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .dockerfile-line:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .active-nav {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .active-tab {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900">Docker for Python Devs</h1>
+            <div class="hidden md:flex space-x-8 text-gray-600">
+                <a href="#introduction" class="hover:text-blue-500 transition-colors nav-link">Introduction</a>
+                <a href="#concepts" class="hover:text-blue-500 transition-colors nav-link">Core Concepts</a>
+                <a href="#commands" class="hover:text-blue-500 transition-colors nav-link">Commands</a>
+                <a href="#dockerize" class="hover:text-blue-500 transition-colors nav-link">Dockerizing Apps</a>
+                <a href="#best-practices" class="hover:text-blue-500 transition-colors nav-link">Best Practices</a>
+            </div>
+            <div class="md:hidden">
+                <select id="mobile-nav" class="bg-gray-200 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                    <option value="#introduction">Introduction</option>
+                    <option value="#concepts">Core Concepts</option>
+                    <option value="#commands">Commands</option>
+                    <option value="#dockerize">Dockerizing Apps</option>
+                    <option value="#best-practices">Best Practices</option>
+                </select>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="introduction" class="py-16 text-center">
+            <h2 class="text-4xl font-bold mb-4 text-gray-900">Revolutionize Your Workflow with Docker</h2>
+            <p class="max-w-3xl mx-auto text-lg text-gray-600 mb-12">
+                This guide provides an interactive exploration of Docker, a platform that packages applications into standardized units called containers. Understand why this technology is essential for modern Python development, ensuring consistency, efficiency, and portability from your local machine to production.
+            </p>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold mb-2 text-blue-600">Portability & Consistency</h3>
+                    <p class="text-gray-700">Eliminate the "it works on my machine" problem. Docker guarantees your application runs identically everywhere, from development to cloud deployment.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold mb-2 text-blue-600">Efficiency & Speed</h3>
+                    <p class="text-gray-700">Containers share the host OS kernel, making them lightweight (MBs, not GBs) and incredibly fast to start, optimizing resource usage.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <h3 class="text-xl font-semibold mb-2 text-blue-600">Isolation & Security</h3>
+                    <p class="text-gray-700">Each container runs as an isolated process, minimizing interference and enhancing security between applications on the same host.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="concepts" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-4">Core Concepts</h2>
+            <p class="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+                Docker's power comes from a few fundamental building blocks. Click on each component below to understand its role in the ecosystem. This section helps you visualize how images, containers, volumes, and networks work together.
+            </p>
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/2 flex flex-col gap-4">
+                    <div id="concept-image" class="concept-item p-4 border-2 border-blue-400 rounded-lg cursor-pointer bg-blue-50 hover:bg-blue-100 transition-colors">
+                        <h4 class="font-bold text-lg text-blue-800">📜 Image</h4>
+                        <p class="text-sm text-blue-700">The immutable, read-only blueprint.</p>
+                    </div>
+                    <div class="text-center text-2xl font-bold text-gray-400">⬇️</div>
+                    <div id="concept-container" class="concept-item p-4 border-2 border-green-400 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 transition-colors">
+                        <h4 class="font-bold text-lg text-green-800">📦 Container</h4>
+                        <p class="text-sm text-green-700">The live, running instance of an image.</p>
+                    </div>
+                    <div class="flex justify-around mt-4">
+                        <div id="concept-volume" class="concept-item p-4 border-2 border-purple-400 rounded-lg cursor-pointer bg-purple-50 hover:bg-purple-100 transition-colors w-2/5 text-center">
+                            <h4 class="font-bold text-lg text-purple-800">💾 Volume</h4>
+                            <p class="text-sm text-purple-700">Persistent data storage.</p>
+                        </div>
+                        <div id="concept-network" class="concept-item p-4 border-2 border-yellow-400 rounded-lg cursor-pointer bg-yellow-50 hover:bg-yellow-100 transition-colors w-2/5 text-center">
+                             <h4 class="font-bold text-lg text-yellow-800">🌐 Network</h4>
+                            <p class="text-sm text-yellow-700">Enables communication.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="concept-details" class="md:w-1/2 p-6 bg-white rounded-lg shadow-lg min-h-[300px]">
+                    <h3 id="details-title" class="text-2xl font-bold mb-4">Select a Concept</h3>
+                    <p id="details-text" class="text-gray-700">Click on a component to the left to see its detailed description here. This will help clarify the distinct roles of images, containers, volumes, and networks in a Dockerized application architecture.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="commands" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-4">Interactive Command Explorer</h2>
+            <p class="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+                Master the Docker CLI by exploring essential commands. This section allows you to interactively learn about commands for managing containers and images, complete with descriptions, common options, and practical examples.
+            </p>
+            <div class="bg-white rounded-lg shadow-lg p-2 md:p-6">
+                <div class="flex justify-center mb-6 border-b border-gray-200">
+                    <button id="container-cmds-btn" class="command-tab-btn py-2 px-6 font-semibold active-tab" data-target="container-commands">Container Commands</button>
+                    <button id="image-cmds-btn" class="command-tab-btn py-2 px-6 font-semibold" data-target="image-commands">Image Commands</button>
+                </div>
+                <div id="commands-content">
+                    <div id="container-commands" class="command-tab-content"></div>
+                    <div id="image-commands" class="command-tab-content hidden"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="dockerize" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-4">Dockerizing Python Applications</h2>
+             <p class="text-lg text-gray-600 text-center mb-12 max-w-3xl mx-auto">
+                Learn by doing. This section provides complete, optimized `Dockerfile` examples for popular Python frameworks. Hover over the lines in the `Dockerfile` to get a detailed explanation of each instruction. This contextual learning is key to understanding how to build efficient and secure images for your own projects.
+            </p>
+            <div class="bg-white rounded-lg shadow-lg p-2 md:p-6">
+                <div class="flex justify-center mb-6 border-b border-gray-200">
+                    <button id="django-btn" class="app-tab-btn py-2 px-6 font-semibold active-tab" data-target="django-app">Django</button>
+                    <button id="fastapi-btn" class="app-tab-btn py-2 px-6 font-semibold" data-target="fastapi-app">FastAPI</button>
+                </div>
+                <div id="app-content">
+                    <div id="django-app" class="app-tab-content"></div>
+                    <div id="fastapi-app" class="app-tab-content hidden"></div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="best-practices" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-4">Dockerfile Best Practices</h2>
+            <p class="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+                Writing a `Dockerfile` is easy, but writing a great one requires know-how. Explore these critical best practices for optimization and security to build smaller, faster, and more secure container images. Click each card to expand for details.
+            </p>
+            <div id="practices-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white text-center p-6 mt-16">
+        <p>&copy; 2025 Interactive Docker Guide. Created to make containerization accessible.</p>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const conceptsData = {
+        image: {
+            title: '📜 Image: The Immutable Blueprint',
+            text: 'A Docker image is a lightweight, standalone, and read-only template that contains all the instructions for creating a container. It packages the application code, runtime, libraries, and settings. Images are built from a series of layers defined in a Dockerfile, and their immutability ensures consistency across all environments.'
+        },
+        container: {
+            title: '📦 Container: The Live, Running Instance',
+            text: 'A container is a runnable instance of a Docker image. When you run an image, it creates a container with a writable layer on top of the immutable image layers. Containers are isolated from each other and from the host machine, but share the host\'s OS kernel, making them extremely efficient and fast to start.'
+        },
+        volume: {
+            title: '💾 Volume: Persistent Data Storage',
+            text: 'Since a container\'s writable layer is ephemeral (data is lost when the container is removed), volumes are used for persistent data. Volumes are Docker-managed directories on the host system that are mounted into a container. They are the recommended way to handle data that needs to outlive the container, such as databases or user uploads.'
+        },
+        network: {
+            title: '🌐 Network: Enabling Communication',
+            text: 'Docker networking allows containers to communicate with each other, the host machine, and external networks. By default, containers are attached to a private bridge network, but you can create user-defined networks to group and isolate related services, enabling secure communication using container names as hostnames.'
+        }
+    };
+
+    const commandsData = {
+        container: [
+            {
+                name: 'docker run',
+                desc: 'Creates and starts a new container from an image.',
+                options: [
+                    { flag: '-d', text: 'Run in detached (background) mode.' },
+                    { flag: '-p', text: 'Publish a port (host:container).' },
+                    { flag: '--name', text: 'Assign a custom name.' },
+                    { flag: '-v', text: 'Mount a volume (host_path:container_path).' },
+                    { flag: '--rm', text: 'Automatically remove the container when it exits.' }
+                ],
+                example: 'docker run -d -p 8080:80 --name web-server nginx'
+            },
+            {
+                name: 'docker ps',
+                desc: 'Lists all currently running containers.',
+                options: [
+                    { flag: '-a', text: 'Show all containers (including stopped).' },
+                    { flag: '-q', text: 'Display only container IDs.' },
+                    { flag: '--filter', text: 'Filter output based on conditions.' }
+                ],
+                example: 'docker ps -a --filter "status=exited"'
+            },
+            {
+                name: 'docker stop',
+                desc: 'Gracefully stops one or more running containers.',
+                options: [
+                    { flag: 'container_id/name', text: 'The ID or name of the container to stop.' },
+                    { flag: '-t', text: 'Seconds to wait for stop before killing it (default 10).' }
+                ],
+                example: 'docker stop web-server'
+            },
+            {
+                name: 'docker rm',
+                desc: 'Removes one or more stopped containers.',
+                options: [
+                    { flag: '-f', text: 'Force remove a running container.' },
+                    { flag: '-v', text: 'Remove anonymous volumes associated with it.' }
+                ],
+                example: 'docker rm web-server'
+            }
+        ],
+        image: [
+            {
+                name: 'docker build',
+                desc: 'Builds an image from a Dockerfile.',
+                options: [
+                    { flag: '-t', text: 'Tag the image (name:version).' },
+                    { flag: '-f', text: 'Specify path to Dockerfile.' },
+                    { flag: '.', text: 'The last argument is the build context path.' }
+                ],
+                example: 'docker build -t my-python-app:1.0 .'
+            },
+            {
+                name: 'docker pull',
+                desc: 'Downloads an image from a registry (e.g., Docker Hub).',
+                options: [
+                    { flag: 'image:tag', text: 'The specific image and tag to pull.' }
+                ],
+                example: 'docker pull python:3.9-slim'
+            },
+            {
+                name: 'docker push',
+                desc: 'Uploads an image to a registry.',
+                options: [
+                    { flag: 'registry/user/image:tag', text: 'The full name of the image to push.' }
+                ],
+                example: 'docker push myregistry/myuser/my-app:1.0'
+            },
+            {
+                name: 'docker images',
+                desc: 'Lists all images stored locally.',
+                options: [
+                    { flag: '-a', text: 'Show all images (including intermediate layers).' },
+                    { flag: '-q', text: 'Display only image IDs.' },
+                    { flag: '--filter "dangling=true"', text: 'Find unused, untagged images.' }
+                ],
+                example: 'docker images'
+            },
+             {
+                name: 'docker rmi',
+                desc: 'Removes one or more local images.',
+                options: [
+                    { flag: 'image_id/name', text: 'The ID or name of the image to remove.' },
+                    { flag: '-f', text: 'Force remove the image.' }
+                ],
+                example: 'docker rmi my-python-app:1.0'
+            }
+        ]
+    };
+
+    const dockerfileData = {
+        django: {
+            title: 'Dockerfile for a Production Django App',
+            description: 'This multi-stage Dockerfile optimizes for production by creating a smaller, more secure final image. It separates the build environment from the runtime environment, installs dependencies efficiently, and runs as a non-root user.',
+            code: [
+                { line: 'FROM python:3.13-slim AS builder', tip: 'Start with a lightweight base image and name this the "builder" stage.' },
+                { line: 'WORKDIR /app', tip: 'Set the working directory inside the container to /app.' },
+                { line: 'ENV PYTHONDONTWRITEBYTECODE=1', tip: 'Prevents Python from writing .pyc files, saving space.' },
+                { line: 'ENV PYTHONUNBUFFERED=1', tip: 'Ensures logs are sent straight to the terminal without buffering.' },
+                { line: 'COPY requirements.txt .', tip: 'Copy dependencies file first to leverage build cache.' },
+                { line: 'RUN pip install --no-cache-dir -r requirements.txt', tip: 'Install dependencies without storing cache, reducing image size.' },
+                { line: 'FROM python:3.13-slim', tip: 'Start the final, clean production stage from the same slim base.' },
+                { line: 'RUN useradd -m -r appuser && chown -R appuser /app', tip: 'Create a non-root user for security.' },
+                { line: 'WORKDIR /app', tip: 'Set the working directory for the final image.' },
+                { line: 'USER appuser', tip: 'Switch to the non-root user.' },
+                { line: 'COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages', tip: 'Copy only the installed packages from the builder stage.' },
+                { line: 'COPY --from=builder /usr/local/bin /usr/local/bin', tip: 'Copy executables (like gunicorn) from the builder stage.' },
+                { line: 'COPY . .', tip: 'Copy the application source code into the final image.' },
+                { line: 'EXPOSE 8000', tip: 'Document the port the application will listen on.' },
+                { line: 'CMD ["gunicorn", "--bind", "0.0.0.0:8000", "my_docker_django_app.wsgi:application"]', tip: 'The command to run the application using a production-ready Gunicorn server.' },
+            ],
+            buildCmd: 'docker build -t django-app:latest .',
+            runCmd: 'docker run -d -p 8000:8000 --name my-django-app django-app:latest'
+        },
+        fastapi: {
+            title: 'Dockerfile for a FastAPI App',
+            description: 'This Dockerfile is optimized for FastAPI. It uses a slim base image, efficiently caches dependencies, and uses the recommended `exec` form of `CMD` for proper signal handling and graceful shutdowns.',
+             code: [
+                { line: 'FROM python:3.9-slim', tip: 'Start with a lightweight Python base image for a smaller final image.' },
+                { line: 'WORKDIR /code', tip: 'Set the working directory inside the container.' },
+                { line: 'COPY ./requirements.txt /code/requirements.txt', tip: 'Copy the requirements file first to leverage Docker layer caching.' },
+                { line: 'RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt', tip: 'Install dependencies. --no-cache-dir reduces image size.' },
+                { line: 'COPY ./app /code/app', tip: 'Copy the application code. This is done after installing dependencies to optimize caching.' },
+                { line: 'EXPOSE 80', tip: 'Document that the container will listen on port 80.' },
+                { line: 'CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]', tip: 'Run the app with Uvicorn. Using the exec form ensures proper process management.' }
+            ],
+            buildCmd: 'docker build -t fastapi-app:latest .',
+            runCmd: 'docker run -d -p 8000:80 --name my-fastapi-app fastapi-app:latest'
+        }
+    };
+    
+    const practicesData = [
+        { title: 'Use Multi-Stage Builds', content: 'Separate your build environment from your runtime environment. One stage installs all build tools and dependencies, while the final, much smaller stage copies only the compiled application and necessary runtime libraries. This drastically reduces image size and attack surface.' },
+        { title: 'Use Lightweight Base Images', content: 'Always start with a minimal base image like `python:3.9-slim` or `python:3.9-alpine` instead of full OS images. This results in smaller, faster, and more secure images.' },
+        { title: 'Leverage Build Cache', content: 'Order your `Dockerfile` instructions from least to most frequently changing. Copy dependency files (e.g., `requirements.txt`) and install them *before* copying your application source code. This way, Docker can reuse cached layers when only your code changes.' },
+        { title: 'Run as a Non-Root User', content: 'By default, containers run as `root`, which is a security risk. Create a dedicated non-root user with `useradd` and switch to it with the `USER` instruction to limit potential damage from a compromised application.' },
+        { title: 'Use `.dockerignore`', content: 'Create a `.dockerignore` file to exclude unnecessary files and directories (like `.git`, `venv`, `__pycache__`) from the build context. This speeds up builds and results in smaller images.' },
+        { title: 'Minimize Layers', content: 'Combine related `RUN` commands using `&&` to reduce the number of image layers. For example, chain `apt-get update`, `apt-get install`, and cleanup commands into a single `RUN` instruction.' }
+    ];
+
+    const detailsTitle = document.getElementById('details-title');
+    const detailsText = document.getElementById('details-text');
+    document.querySelectorAll('.concept-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const conceptId = item.id.split('-')[1];
+            detailsTitle.textContent = conceptsData[conceptId].title;
+            detailsText.textContent = conceptsData[conceptId].text;
+            document.querySelectorAll('.concept-item').forEach(i => i.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-500'));
+            item.classList.add('ring-4', 'ring-offset-2', 'ring-blue-500');
+        });
+    });
+
+    function createCommandHTML(command) {
+        return `
+            <div class="mb-6 p-4 border rounded-lg hover:bg-gray-50">
+                <h4 class="text-xl font-semibold text-gray-800">${command.name}</h4>
+                <p class="text-gray-600 my-2">${command.desc}</p>
+                <div class="my-2">
+                    ${command.options.map(opt => `<span class="inline-block bg-gray-200 text-gray-700 text-xs font-mono rounded-full px-3 py-1 mr-2 mb-2">${opt.flag}</span>`).join('')}
+                </div>
+                <pre class="bg-gray-900 text-white p-3 rounded-md text-sm font-mono overflow-x-auto"><code>${command.example}</code></pre>
+            </div>
+        `;
+    }
+
+    const containerCommandsDiv = document.getElementById('container-commands');
+    const imageCommandsDiv = document.getElementById('image-commands');
+    containerCommandsDiv.innerHTML = commandsData.container.map(createCommandHTML).join('');
+    imageCommandsDiv.innerHTML = commandsData.image.map(createCommandHTML).join('');
+
+    document.querySelectorAll('.command-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.command-tab-btn').forEach(b => b.classList.remove('active-tab'));
+            btn.classList.add('active-tab');
+            document.querySelectorAll('.command-tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(btn.dataset.target).classList.remove('hidden');
+        });
+    });
+
+    function createDockerfileHTML(appData) {
+        return `
+            <div class="prose max-w-none">
+                <h3 class="text-2xl font-bold">${appData.title}</h3>
+                <p class="text-gray-600">${appData.description}</p>
+                <div class="bg-gray-900 text-white my-4 p-4 rounded-md font-mono text-sm overflow-x-auto">
+                    ${appData.code.map(item => `
+                        <div class="dockerfile-line relative">
+                            <span>${item.line}</span>
+                            <div class="tooltip">${item.tip}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <h4 class="font-semibold mt-6">Build & Run Commands:</h4>
+                <p>Build the image:</p>
+                <pre class="bg-gray-900 text-white p-3 rounded-md"><code>${appData.buildCmd}</code></pre>
+                <p>Run the container:</p>
+                <pre class="bg-gray-900 text-white p-3 rounded-md"><code>${appData.runCmd}</code></pre>
+            </div>
+        `;
+    }
+
+    const djangoAppDiv = document.getElementById('django-app');
+    const fastapiAppDiv = document.getElementById('fastapi-app');
+    djangoAppDiv.innerHTML = createDockerfileHTML(dockerfileData.django);
+    fastapiAppDiv.innerHTML = createDockerfileHTML(dockerfileData.fastapi);
+
+    document.querySelectorAll('.app-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.app-tab-btn').forEach(b => b.classList.remove('active-tab'));
+            btn.classList.add('active-tab');
+            document.querySelectorAll('.app-tab-content').forEach(content => content.classList.add('hidden'));
+            document.getElementById(btn.dataset.target).classList.remove('hidden');
+        });
+    });
+
+    const practicesGrid = document.getElementById('practices-grid');
+    practicesGrid.innerHTML = practicesData.map(p => `
+        <div class="practice-card bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-xl transition-shadow">
+            <h4 class="text-lg font-semibold text-blue-700">${p.title}</h4>
+            <div class="practice-content hidden mt-2 text-gray-600">
+                <p>${p.content}</p>
+            </div>
+        </div>
+    `).join('');
+
+    document.querySelectorAll('.practice-card').forEach(card => {
+        card.addEventListener('click', () => {
+            card.querySelector('.practice-content').classList.toggle('hidden');
+            card.classList.toggle('bg-blue-50');
+        });
+    });
+    
+    const sections = document.querySelectorAll('section');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active-nav', link.getAttribute('href').substring(1) === entry.target.id);
+                });
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
+
+    sections.forEach(section => observer.observe(section));
+
+    document.getElementById('mobile-nav').addEventListener('change', function() {
+        window.location.hash = this.value;
+    });
+});
+</script>
+</body>
+</html>
